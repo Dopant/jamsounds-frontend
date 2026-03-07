@@ -9,10 +9,10 @@ export default defineConfig(({ mode }) => ({
     host: "::",
     port: 8080,
     proxy: {
-      // "/api": "https://backend.jamjournal.com",
-      // "/uploads": "https://backend.jamjournal.com",
-      "/api": "http://localhost:4000",
-      "/uploads": "http://localhost:4000", // Image/media uploads
+      "/api": "https://backend.jamjournal.com",
+      "/uploads": "https://backend.jamjournal.com"
+      // "/api": "http://localhost:4000",
+      // "/uploads": "http://localhost:4000", // Image/media uploads
     },
   },
   plugins: [
