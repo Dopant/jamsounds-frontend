@@ -1,74 +1,38 @@
-# Welcome to your Lovable project
+# JamJournal frontend
 
-## Project info
+JamJournal is an independent music editorial site for emerging artists and listeners around the world. The frontend uses React, TypeScript, Vite, Tailwind CSS, shadcn/ui, and Tiptap.
 
-**URL**: https://lovable.dev/projects/a6a665f7-c6e5-4ca1-8096-f219c5884703
+## Local development
 
-## How can I edit this code?
+Use Node.js 22 or later. Install platform-specific dependencies from the lockfile:
 
-There are several ways of editing your application.
-
-**Use Lovable**
-
-Simply visit the [Lovable Project](https://lovable.dev/projects/a6a665f7-c6e5-4ca1-8096-f219c5884703) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+```bash
+npm ci
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+The development server listens on port 8080. `/api` and `/uploads` currently proxy to `https://backend.jamjournal.com`; change the Vite proxy to `http://localhost:4000` when running the backend locally.
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+```bash
+npm run typecheck
+npm run build
+npm run preview
+```
 
-**Use GitHub Codespaces**
+Set `VITE_PUBLIC_SITE_URL=https://jamjournal.com` when building for production. Use the same origin for the backend's `PUBLIC_SITE_URL`.
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+## Editorial experience
 
-## What technologies are used for this project?
+- The homepage rediscovery slideshow loads a shuffled selection of up to eight reviews from `/api/posts/rediscover`. It pauses on hover/focus, supports swipe and manual controls, and respects reduced-motion preferences.
+- Public pages do not display readership counts, article totals, or rating scores. Readership analytics remain available in administration; admin pages verify the session before rendering and logout clears the stored token.
+- JamJournal's X and YouTube channels are hidden publicly; artists may still include their own links.
+- Artist links support Facebook, X, Spotify, YouTube, Apple Music, TikTok, Instagram, and an official website.
+- The author follow button uses the JamJournal Instagram URL configured in admin settings.
 
-This project is built with:
+## Production rendering and SEO
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+Deploy this build together with the backend editorial SEO change. Nginx serves `/assets/*` and `/jamjournal-logo.png` from this `dist` directory and proxies page HTML, APIs, uploads, robots, and sitemap requests to Express. Express injects safe initial public content, article metadata, canonical links, and JSON-LD into this build's `index.html`; React then renders the interactive page normally. This is initial HTML rendering, not React hydration, and does not use bot-specific responses.
 
-## How can I deploy this project?
+Existing `/blog/post/:id` URLs are retained. Article metadata also updates during in-app navigation using an endpoint that does not increment readership counters.
 
-Simply open [Lovable](https://lovable.dev/projects/a6a665f7-c6e5-4ca1-8096-f219c5884703) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
-# -jamsounds-frontend
+See the backend README for Nginx deployment and Google Search Console steps. Do not deploy the Nginx rendering changes until the matching frontend build is available to the backend.

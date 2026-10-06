@@ -94,7 +94,7 @@ const AdminContent = () => {
               type: m.type === 'external' ? 'external' : 'local',
               mediaType: m.media_type || 'audio',
               platform: m.platform || '',
-              url: m.url || '',
+              url: (m.type === 'local' ? m.file_url : m.url) || '',
               title: m.title || '',
               artist: m.artist || '',
             }))

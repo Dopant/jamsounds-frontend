@@ -7,11 +7,10 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { SearchAutocomplete } from "@/components/ui/search-autocomplete";
-import { 
-  Search, 
-  Filter, 
-  Star, 
-  Calendar, 
+import {
+  Search,
+  Filter,
+  Calendar,
   TrendingUp,
   ArrowUpDown,
   ChevronLeft,
@@ -21,7 +20,7 @@ import {
   User
 } from "lucide-react";
 import { getApiUrl, handleSubmitMusicRedirect, getImageUrl } from "@/lib/utils";
-import { FaXTwitter, FaFacebook, FaInstagram, FaYoutube, FaTiktok, FaSpotify } from 'react-icons/fa6';
+import { FaFacebook, FaInstagram, FaTiktok, FaSpotify } from 'react-icons/fa6';
 
 const Blog = () => {
   const [selectedGenre, setSelectedGenre] = useState("All Genres");
@@ -32,7 +31,6 @@ const Blog = () => {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [ratingLoading, setRatingLoading] = useState({});
   const [popularPosts, setPopularPosts] = useState([]);
   const [recentPosts, setRecentPosts] = useState([]);
   const [loadingPopular, setLoadingPopular] = useState(true);
@@ -47,9 +45,6 @@ const Blog = () => {
 
   useEffect(() => {
     console.log('Blog.tsx useEffect running');
-    if (typeof process !== 'undefined' && process.stdout) {
-      process.stdout.write('Blog.tsx useEffect running (server)\n');
-    }
     setLoading(true);
     fetch(getApiUrl('/api/posts'))
       .then(res => {
@@ -63,9 +58,6 @@ const Blog = () => {
       })
       .catch((err) => {
         console.error('Failed to load posts:', err);
-        if (typeof process !== 'undefined' && process.stdout) {
-          process.stdout.write('Failed to load posts: ' + err + '\n');
-        }
         setError('Failed to load posts');
         setLoading(false);
       });
@@ -143,7 +135,7 @@ const Blog = () => {
   }, []);
 
   // Filter and sort posts (filterBy handled client-side for now)
-  let filteredPosts = posts
+  const filteredPosts = posts
     .filter(post => {
       // Filter by genre
       if (selectedGenre !== 'All Genres' && post.genre_name !== selectedGenre) return false;
@@ -151,11 +143,16 @@ const Blog = () => {
     })
     .filter(post => {
       // Additional filterBy logic (featured/recent)
-      const matchesFilter = filterBy === "all" || 
+      const matchesFilter = filterBy === "all" ||
         (filterBy === "featured" && post.featured) ||
         (filterBy === "recent" && new Date(post.created_at) > new Date(Date.now() - 7*24*60*60*1000));
       return matchesFilter;
-    });
+    })
+    .sort((a, b) => sortBy === "oldest"
+      ? new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+      : new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+  useEffect(() => { setCurrentPage(1); }, [selectedGenre, filterBy, sortBy]);
 
   // Pagination
   const totalPages = Math.ceil(filteredPosts.length / postsPerPage);
@@ -170,26 +167,12 @@ const Blog = () => {
     });
   };
 
-  const formatViews = (views) => {
-    if (!views) return '0 views';
-    if (views >= 10000) return `${(views / 1000).toFixed(1)}K views`;
-    return `${views} views`;
-  };
 
-  const handleRatePost = async (postId) => {
-    setRatingLoading((prev) => ({ ...prev, [postId]: true }));
-    try {
-      await fetch(getApiUrl(`/api/posts/${postId}/rate`), { method: 'POST' });
-      setPosts((prev) => prev.map(p => p.id === postId ? { ...p, rating: (p.rating || 0) + 1 } : p));
-    } finally {
-      setRatingLoading((prev) => ({ ...prev, [postId]: false }));
-    }
-  };
 
   return (
     <div>
       <PublicNavigation />
-      
+
       {/* Header */}
       <section className="py-16 bg-gradient-card border-b border-border/50">
         <div className="container mx-auto px-4">
@@ -200,7 +183,7 @@ const Blog = () => {
             <p className="text-xl text-muted-foreground mb-8">
               Discover emerging artists, read in-depth reviews, and stay ahead of music trends
             </p>
-            
+
             {/* Search – autocomplete, click opens article */}
             <div className="max-w-md mx-auto">
               <SearchAutocomplete
@@ -256,14 +239,11 @@ const Blog = () => {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="latest">Latest</SelectItem>
-                    <SelectItem value="popular">Most Popular</SelectItem>
-                    <SelectItem value="rating">Highest Rated</SelectItem>
+                    <SelectItem value="oldest">Oldest</SelectItem>
                   </SelectContent>
                 </Select>
 
-                <div className="text-sm text-muted-foreground">
-                  {filteredPosts.length} articles found
-                </div>
+
               </div>
             </div>
 
@@ -289,17 +269,7 @@ const Blog = () => {
                           {post.genre}
                         </Badge>
                       </div> */}
-                      <div className="absolute top-4 right-4">
-                        <button
-                          className="flex items-center bg-black/50 backdrop-blur-sm px-2 py-1 rounded-full text-white text-xs focus:outline-none"
-                          onClick={e => { e.preventDefault(); e.stopPropagation(); handleRatePost(post.id); }}
-                          disabled={ratingLoading[post.id]}
-                          title="Rate this post"
-                        >
-                          <Star className="w-3 h-3 fill-yellow-400 text-yellow-400 mr-1" />
-                          {post.rating || 0}
-                        </button>
-                      </div>
+
                     </div>
                     <div className="p-6">
                       <h3 className="text-xl font-semibold mb-3 group-hover:text-primary transition-colors line-clamp-2">
@@ -332,10 +302,7 @@ const Blog = () => {
                           <Calendar className="w-4 h-4" />
                           <span>{formatDate(post.created_at || post.date)}</span>
                         </div>
-                        {/* <div className="flex items-center space-x-1">
-                          <TrendingUp className="w-4 h-4" />
-                          <span>{formatViews(post.views)}</span>
-                        </div> */}
+
                       </div>
                     </div>
                   </Card>
@@ -366,19 +333,19 @@ const Blog = () => {
                   <span className="hidden sm:inline">Previous</span>
                   <span className="sm:hidden">Prev</span>
                 </Button>
-                
+
                 <div className="flex items-center gap-1">
                   {(() => {
                     const pagesPerGroup = 5;
                     const currentGroup = Math.ceil(currentPage / pagesPerGroup);
                     const startPage = (currentGroup - 1) * pagesPerGroup + 1;
                     const endPage = Math.min(currentGroup * pagesPerGroup, totalPages);
-                    
+
                     const pages = [];
                     for (let i = startPage; i <= endPage; i++) {
                       pages.push(i);
                     }
-                    
+
                     return pages.map((page) => (
                       <Button
                         key={page}
@@ -424,7 +391,7 @@ const Blog = () => {
               <Card className="p-6 animate-fade-in">
                 <h3 className="font-semibold mb-4 flex items-center">
                   <TrendingUp className="w-5 h-5 mr-2" />
-                  Popular This Week
+                  Discover More
                 </h3>
                 <div className="space-y-4">
                   {loadingPopular ? (
@@ -438,8 +405,8 @@ const Blog = () => {
                       <Link key={post.id} to={`/blog/post/${post.id}`}>
                         <div className="group cursor-pointer">
                           <div className="flex space-x-3">
-                            <img 
-                              src={getImageUrl(post.hero_image_url || post.image || '')} 
+                            <img
+                              src={getImageUrl(post.hero_image_url || post.image || '')}
                               alt={post.title}
                               className="w-16 h-auto object-contain max-h-16 rounded-lg flex-shrink-0"
                             />
@@ -482,8 +449,8 @@ const Blog = () => {
                       <Link key={post.id} to={`/blog/post/${post.id}`}>
                         <div className="group cursor-pointer">
                           <div className="flex space-x-3">
-                            <img 
-                              src={getImageUrl(post.hero_image_url || post.image || '')} 
+                            <img
+                              src={getImageUrl(post.hero_image_url || post.image || '')}
                               alt={post.title}
                               className="w-16 h-auto object-contain max-h-16 rounded-lg flex-shrink-0"
                             />
@@ -623,11 +590,6 @@ const Blog = () => {
             <div>
               <h3 className="font-semibold mb-4">Follow Us</h3>
               <div className="flex space-x-4 mb-4">
-                {socialLinks.social_x_url && (
-                  <a href={socialLinks.social_x_url} target="_blank" rel="noopener noreferrer" aria-label="X">
-                    <FaXTwitter className="w-6 h-6 hover:text-primary transition-colors" />
-                  </a>
-                )}
                 {socialLinks.social_facebook_url && (
                   <a href={socialLinks.social_facebook_url} target="_blank" rel="noopener noreferrer" aria-label="Facebook">
                     <FaFacebook className="w-6 h-6 hover:text-primary transition-colors" />
@@ -636,11 +598,6 @@ const Blog = () => {
                 {socialLinks.social_instagram_url && (
                   <a href={socialLinks.social_instagram_url} target="_blank" rel="noopener noreferrer" aria-label="Instagram">
                     <FaInstagram className="w-6 h-6 hover:text-primary transition-colors" />
-                  </a>
-                )}
-                {socialLinks.social_youtube_url && (
-                  <a href={socialLinks.social_youtube_url} target="_blank" rel="noopener noreferrer" aria-label="YouTube">
-                    <FaYoutube className="w-6 h-6 hover:text-primary transition-colors" />
                   </a>
                 )}
                 {socialLinks.social_tiktok_url && (

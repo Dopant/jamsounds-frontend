@@ -10,7 +10,7 @@ import {
   Check
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { FaXTwitter, FaFacebook, FaInstagram, FaYoutube, FaTiktok, FaSpotify } from 'react-icons/fa6';
+import { FaFacebook, FaInstagram, FaTiktok, FaSpotify } from 'react-icons/fa6';
 
 interface SocialShareProps {
   url: string;
@@ -49,16 +49,6 @@ export function SocialShare({ url, title, excerpt, className }: SocialShareProps
   return (
     <div className={`flex items-center space-x-2 ${className}`}>
       <span className="text-sm text-muted-foreground">Share:</span>
-      {socialLinks.social_x_url && (
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={() => handleShare("twitter")}
-          className="hover:bg-blue-50 hover:border-blue-300 hover:text-blue-600"
-        >
-          <FaXTwitter className="w-4 h-4" />
-        </Button>
-      )}
       {socialLinks.social_facebook_url && (
         <Button
           size="sm"
@@ -82,22 +72,6 @@ export function SocialShare({ url, title, excerpt, className }: SocialShareProps
             className="hover:bg-pink-50 hover:border-pink-300 hover:text-pink-600"
           >
             <FaInstagram className="w-4 h-4" />
-          </Button>
-        </a>
-      )}
-      {socialLinks.social_youtube_url && (
-        <a
-          href={socialLinks.social_youtube_url}
-          target="_blank"
-          rel="noopener noreferrer"
-          aria-label="YouTube"
-        >
-          <Button
-            size="sm"
-            variant="outline"
-            className="hover:bg-red-50 hover:border-red-300 hover:text-red-600"
-          >
-            <FaYoutube className="w-4 h-4" />
           </Button>
         </a>
       )}
