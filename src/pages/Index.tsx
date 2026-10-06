@@ -5,10 +5,9 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import PublicNavigation from "@/components/layout/PublicNavigation";
-import { 
-  Music, 
-  Star, 
-  TrendingUp, 
+import {
+  Music,
+  TrendingUp,
   Calendar,
   ArrowRight,
   Play,
@@ -20,8 +19,8 @@ import {
 import heroImage from "@/assets/hero-image.jpg";
 import { getApiUrl, handleSubmitMusicRedirect, getImageUrl } from "@/lib/utils";
 import { SearchAutocomplete } from "@/components/ui/search-autocomplete";
-import Unsubscribe from './Unsubscribe';
-import { FaXTwitter, FaFacebook, FaInstagram, FaYoutube, FaTiktok, FaSpotify } from 'react-icons/fa6';
+import { ReviewCarousel } from "@/components/ReviewCarousel";
+import { FaFacebook, FaInstagram, FaTiktok, FaSpotify } from 'react-icons/fa6';
 
 const Index = () => {
   const [selectedGenre, setSelectedGenre] = useState("All Genres");
@@ -37,12 +36,6 @@ const Index = () => {
   const [errorFeatured, setErrorFeatured] = useState(null);
   const [errorLatest, setErrorLatest] = useState(null);
   const [errorPopular, setErrorPopular] = useState(null);
-  const [homepageStats, setHomepageStats] = useState({
-    artists_featured_count: '',
-    reviews_published_count: '',
-    monthly_readers_count: ''
-  });
-  const [statsLoading, setStatsLoading] = useState(true);
   const [homepageContent, setHomepageContent] = useState({
     homepage_title: '',
     homepage_subtitle: '',
@@ -57,9 +50,6 @@ const Index = () => {
 
   useEffect(() => {
     console.log('Index.tsx loaded');
-    if (typeof process !== 'undefined' && process.stdout) {
-      process.stdout.write('Index.tsx loaded (server)\n');
-    }
   }, []);
 
   useEffect(() => {
@@ -83,9 +73,6 @@ const Index = () => {
 
   useEffect(() => {
     // Log when the featured posts fetch starts
-    if (typeof process !== 'undefined' && process.stdout) {
-      process.stdout.write('Fetching featured posts...\n');
-    }
     setLoadingFeatured(true);
     fetch(getApiUrl('/api/posts?category=featured&limit=4'))
       .then(res => {
@@ -93,17 +80,11 @@ const Index = () => {
         return res.json();
       })
       .then(data => {
-        if (typeof process !== 'undefined' && process.stdout) {
-          process.stdout.write('Featured posts data: ' + JSON.stringify(data) + '\n');
-        }
         setFeaturedPosts(data);
         setErrorFeatured(null);
         setLoadingFeatured(false);
       })
       .catch((err) => {
-        if (typeof process !== 'undefined' && process.stdout) {
-          process.stdout.write('Failed to load featured posts: ' + err + '\n');
-        }
         setErrorFeatured('Failed to load featured posts');
         setLoadingFeatured(false);
       });
@@ -127,19 +108,6 @@ const Index = () => {
       });
   }, []);
 
-  useEffect(() => {
-    async function fetchHomepageStats() {
-      try {
-        const res = await fetch('/api/auth/homepage-stats');
-        if (!res.ok) return;
-        const data = await res.json();
-        setHomepageStats(data);
-      } finally {
-        setStatsLoading(false);
-      }
-    }
-    fetchHomepageStats();
-  }, []);
 
   useEffect(() => {
     async function fetchHomepageContent() {
@@ -191,11 +159,6 @@ const Index = () => {
   }, []);
 
   // Add view formatting helper
-  const formatViews = (views) => {
-    if (!views) return '0 views';
-    if (views >= 10000) return `${(views / 1000).toFixed(1)}K views`;
-    return `${views} views`;
-  };
 
   // Latest posts are now fetched by genre from API when selectedGenre changes
   const filteredLatestPosts = latestPosts;
@@ -203,22 +166,22 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background">
       <PublicNavigation />
-      
+
       {/* Hero Section */}
       <section className="relative h-screen">
         <div className="absolute inset-0">
-          <img 
-            src={heroImage} 
-            alt="Music Hero Background" 
+          <img
+            src={heroImage}
+            alt="Music Hero Background"
             className="w-full h-full object-cover"
           />
           <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/50 to-transparent" />
         </div>
-        
+
         <div className="relative container mx-auto px-4 py-24 lg:py-32">
           <div className="max-w-3xl animate-fade-in">
             <h1 className="text-5xl lg:text-7xl font-playfair font-bold text-white mb-6 leading-tight">
-             
+
               <span className="bg-gradient-to-r from-secondary to-accent bg-clip-text text-transparent">  </span>
             </h1>
             <h2 className="text-2xl lg:text-3xl font-playfair font-semibold text-white mb-4 leading-tight">
@@ -243,31 +206,7 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Stats Section */}
-      <section className="py-16 bg-gradient-card border-b border-border/50">
-        <div className="container mx-auto px-4">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-            <div className="text-center animate-scale-in stagger-1">
-              <div className="text-3xl lg:text-4xl font-bold text-primary mb-2">
-                {statsLoading ? '...' : homepageStats.artists_featured_count || '2.5K+'}
-              </div>
-              <p className="text-muted-foreground">Artists Featured</p>
-            </div>
-            <div className="text-center animate-scale-in stagger-2">
-              <div className="text-3xl lg:text-4xl font-bold text-secondary mb-2">
-                {statsLoading ? '...' : homepageStats.reviews_published_count || '15K+'}
-              </div>
-              <p className="text-muted-foreground">Reviews Published</p>
-            </div>
-            <div className="text-center animate-scale-in stagger-3">
-              <div className="text-3xl lg:text-4xl font-bold text-accent mb-2">
-                {statsLoading ? '...' : homepageStats.monthly_readers_count || '1M+'}
-              </div>
-              <p className="text-muted-foreground">Monthly Readers</p>
-            </div>
-          </div>
-        </div>
-      </section>
+      <ReviewCarousel />
 
       {/* Featured Articles */}
       <section className="py-16">
@@ -290,8 +229,8 @@ const Index = () => {
                 <Link key={post.id} to={`/blog/post/${post.id}`}>
                   <Card className={`article-card group animate-slide-up stagger-${index + 1}`}>
                     <div className="relative overflow-hidden">
-                      <img 
-                        src={getImageUrl(post.hero_image_url || post.image || '')} 
+                      <img
+                        src={getImageUrl(post.hero_image_url || post.image || '')}
                         alt={post.title}
                         className="w-full h-auto object-contain max-h-64 lg:max-h-80 transition-transform duration-500 group-hover:scale-105"
                         onError={e => e.currentTarget.style.display = 'none'}
@@ -330,12 +269,7 @@ const Index = () => {
                           <span>•</span>
                           <span>{post.readTime}</span>
                         </div>
-                        {/* <div className="flex items-center space-x-2">
-                          <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                          <span>{post.rating}</span>
-                           <TrendingUp className="w-4 h-4 ml-2" />
-                          <span>{formatViews(post.views)}</span> 
-                        </div> */}
+
                       </div>
                     </div>
                   </Card>
@@ -392,8 +326,8 @@ const Index = () => {
                     <Link key={post.id} to={`/blog/post/${post.id}`}>
                       <Card className={`article-card group animate-scale-in stagger-${index + 1}`}>
                         <div className="relative overflow-hidden">
-                          <img 
-                            src={getImageUrl(post.hero_image_url || post.image || '')} 
+                          <img
+                            src={getImageUrl(post.hero_image_url || post.image || '')}
                             alt={post.title}
                             className="w-full h-auto object-contain max-h-48 transition-transform duration-500 group-hover:scale-105"
                             onError={e => e.currentTarget.style.display = 'none'}
@@ -429,12 +363,7 @@ const Index = () => {
                               <span>•</span>
                               <span>{new Date(post.created_at || post.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
                             </div>
-                            {/* <div className="flex items-center space-x-2">
-                              <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                              <span>{post.rating}</span>
-                              <TrendingUp className="w-4 h-4 ml-2" />
-                              <span>{formatViews(post.views)}</span>
-                            </div> */}
+
                           </div>
                         </div>
                       </Card>
@@ -459,7 +388,7 @@ const Index = () => {
                 <Card className="p-6 animate-slide-up stagger-1">
                   <h3 className="font-semibold mb-4 flex items-center">
                     <TrendingUp className="w-5 h-5 mr-2" />
-                    Popular This Week
+                    Discover More
                   </h3>
                   <div className="space-y-4">
                     {loadingPopular ? (
@@ -478,8 +407,6 @@ const Index = () => {
                             </p>
                             <div className="flex items-center space-x-2 text-xs text-muted-foreground mt-1">
                               <span>{post.genre}</span>
-                              <span>•</span>
-                              <span>{post.views} views</span>
                             </div>
                           </div>
                         </div>
@@ -561,7 +488,7 @@ const Index = () => {
               Ready to Share Your Sound?
             </h2>
             <p className="text-xl mb-8 opacity-90">
-              Join thousands of artists who've found their audience through our platform
+              Share your music with curious listeners around the world
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button size="lg" className="bg-white text-primary hover:bg-white/90" onClick={handleSubmitMusicRedirect}>
@@ -569,7 +496,7 @@ const Index = () => {
                 <ArrowRight className="ml-2 w-5 h-5" />
               </Button>
               <Link to="/blog">
-                <Button size="lg" variant="outline" className="border-white/30 text-white hover:bg-white/10">
+                <Button size="lg" variant="outline" className="border-white bg-black text-white hover:bg-black/80 hover:text-white focus-visible:ring-white">
                   Explore Articles
                 </Button>
               </Link>
@@ -608,7 +535,7 @@ const Index = () => {
                 </Button>
               </div>
             </div>
-            
+
             <div>
               <h4 className="font-semibold mb-4">Content</h4>
               <div className="space-y-2 text-background/70">
@@ -616,7 +543,7 @@ const Index = () => {
                 <Link to="#" className="block hover:text-background transition-colors" onClick={e => { e.preventDefault(); handleSubmitMusicRedirect(); }}>Submit Music</Link>
               </div>
             </div>
-            
+
             <div>
               <h4 className="font-semibold mb-4">About</h4>
               <div className="space-y-2 text-background/70">
@@ -626,14 +553,9 @@ const Index = () => {
               </div>
             </div>
           </div>
-          
+
           <div className="border-t border-background/20 mt-12 pt-8 text-center text-background/60">
             <div className="flex space-x-4 mb-4">
-              {socialLinks.social_x_url && (
-                <a href={socialLinks.social_x_url} target="_blank" rel="noopener noreferrer" aria-label="X">
-                  <FaXTwitter className="w-6 h-6 hover:text-primary transition-colors" />
-                </a>
-              )}
               {socialLinks.social_facebook_url && (
                 <a href={socialLinks.social_facebook_url} target="_blank" rel="noopener noreferrer" aria-label="Facebook">
                   <FaFacebook className="w-6 h-6 hover:text-primary transition-colors" />
@@ -642,11 +564,6 @@ const Index = () => {
               {socialLinks.social_instagram_url && (
                 <a href={socialLinks.social_instagram_url} target="_blank" rel="noopener noreferrer" aria-label="Instagram">
                   <FaInstagram className="w-6 h-6 hover:text-primary transition-colors" />
-                </a>
-              )}
-              {socialLinks.social_youtube_url && (
-                <a href={socialLinks.social_youtube_url} target="_blank" rel="noopener noreferrer" aria-label="YouTube">
-                  <FaYoutube className="w-6 h-6 hover:text-primary transition-colors" />
                 </a>
               )}
               {socialLinks.social_tiktok_url && (

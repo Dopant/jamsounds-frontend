@@ -39,6 +39,9 @@ interface ArtistSocialLinks {
   spotify?: string;
   youtube?: string;
   apple_music?: string;
+  tiktok?: string;
+  instagram?: string;
+  website?: string;
 }
 
 interface PostData {
@@ -200,6 +203,16 @@ export function PostEditor({ initialData, genres, onSave, onCancel }: PostEditor
       });
       return;
     }
+    for (const link of Object.values(postData.artist_social_links || {})) {
+      if (!link?.trim()) continue;
+      try {
+        const url = new URL(link.trim());
+        if (!['https:', 'http:'].includes(url.protocol) || url.username || url.password) throw new Error();
+      } catch {
+        toast({ title: 'Invalid artist link', description: 'Use a full http:// or https:// URL for each artist link.', variant: 'destructive' });
+        return;
+      }
+    }
     // Build FormData for multipart/form-data
     const formData = new FormData();
     formData.append("title", postData.title);
@@ -233,6 +246,7 @@ export function PostEditor({ initialData, genres, onSave, onCancel }: PostEditor
     if (Object.keys(artistSocial).length) {
       formData.append("artist_social_links", JSON.stringify(artistSocial));
     }
+    formData.append("retainedLocalMediaIds", JSON.stringify(postData.mediaItems.filter(item => item.type === "local" && !item.file).map(item => item.id)));
     // Add media items (local files only)
     postData.mediaItems.forEach((item, idx) => {
       if (item.type === "local" && item.file) {
@@ -348,6 +362,14 @@ export function PostEditor({ initialData, genres, onSave, onCancel }: PostEditor
                 <Label className="text-base">Artist social media</Label>
                 <p className="text-sm text-muted-foreground mb-3">Optional links for the featured artist (shown on the post page).</p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {(['tiktok', 'instagram', 'website'] as const).map((key) => (
+                    <div key={key}>
+                      <Label htmlFor={`artist_${key}`} className="text-xs">{key === 'website' ? 'Official Website' : key === 'tiktok' ? 'TikTok' : 'Instagram'}</Label>
+                      <Input id={`artist_${key}`} type="url" value={postData.artist_social_links?.[key] || ''}
+                        onChange={(e) => setPostData(prev => ({ ...prev, artist_social_links: { ...prev.artist_social_links, [key]: e.target.value } }))}
+                        placeholder={key === 'website' ? 'https://artist.com' : `https://${key}.com/artist`} />
+                    </div>
+                  ))}
                   <div>
                     <Label htmlFor="artist_facebook" className="text-xs">Facebook</Label>
                     <Input

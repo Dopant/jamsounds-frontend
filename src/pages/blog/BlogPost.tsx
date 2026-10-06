@@ -9,13 +9,12 @@ import { Separator } from "@/components/ui/separator";
 import { MusicPlayer } from "@/components/ui/music-player";
 import { MediaPlayer } from "@/components/ui/media-player";
 import { SocialShare } from "@/components/ui/social-share";
-import { 
-  Calendar, 
-  Clock, 
-  Star, 
-  Share2, 
-  Facebook, 
-  Twitter, 
+import {
+  Calendar,
+  Clock,
+  Share2,
+  Facebook,
+  Globe,
   MessageCircle,
   Heart,
   Play,
@@ -24,13 +23,12 @@ import {
   SkipBack,
   SkipForward,
   User,
-  Eye,
   ThumbsUp,
   Music,
   TrendingUp
 } from "lucide-react";
 import { FaXTwitter, FaFacebook, FaInstagram, FaYoutube, FaTiktok, FaSpotify, FaApple } from 'react-icons/fa6';
-import { getImageUrl } from "@/lib/utils";
+import { getImageUrl, safeExternalLink } from "@/lib/utils";
 import { analyzeImageColors, ColorAnalysis } from "@/lib/colorAnalysis";
 
 // Utility to convert plain text to HTML with paragraphs and line breaks
@@ -56,13 +54,14 @@ const BlogPost = () => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [liked, setLiked] = useState(false);
   const [commentsVisible, setCommentsVisible] = useState(false);
-  const [ratingLoading, setRatingLoading] = useState(false);
   const [socialLinks, setSocialLinks] = useState<any>({});
   const [heroColorAnalysis, setHeroColorAnalysis] = useState<ColorAnalysis | null>(null);
   const [relatedArticles, setRelatedArticles] = useState<any[]>([]);
 
   useEffect(() => {
     setLoading(true);
+    setError(null);
+    setPost(null);
     console.log('Fetching post with id:', id);
     fetch(`/api/posts/${id}`)
       .then(res => {
@@ -125,7 +124,7 @@ const BlogPost = () => {
           console.warn('Failed to analyze hero image colors:', error);
         }
       };
-      
+
       analyzeColors();
     }
   }, [post?.hero_image_url]);
@@ -174,11 +173,11 @@ const BlogPost = () => {
   const artistSocial = (() => {
     try {
       const raw = post.artist_social_links;
-      if (typeof raw === 'string') return JSON.parse(raw) || {};
-      return raw && typeof raw === 'object' ? raw : {};
+      const links = typeof raw === 'string' ? JSON.parse(raw) : raw;
+      return Object.fromEntries(Object.entries(links || {}).map(([key, value]) => [key, safeExternalLink(value)]));
     } catch { return {}; }
   })();
-  const hasArtistSocial = artistSocial && (artistSocial.facebook || artistSocial.x || artistSocial.spotify || artistSocial.youtube || artistSocial.apple_music);
+  const hasArtistSocial = artistSocial && (artistSocial.facebook || artistSocial.x || artistSocial.spotify || artistSocial.youtube || artistSocial.apple_music || artistSocial.tiktok || artistSocial.instagram || artistSocial.website);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -191,7 +190,7 @@ const BlogPost = () => {
   const sharePost = (platform: string) => {
     const url = window.location.href;
     const title = post.title;
-    
+
     let shareUrl = '';
     switch (platform) {
       case 'twitter':
@@ -206,31 +205,22 @@ const BlogPost = () => {
       default:
         break;
     }
-    
+
     if (shareUrl) {
       window.open(shareUrl, '_blank', 'width=600,height=400');
     }
   };
 
-  const handleRatePost = async () => {
-    setRatingLoading(true);
-    try {
-      await fetch(`/api/posts/${id}/rate`, { method: 'POST' });
-      setPost((prev) => ({ ...prev, rating: (prev.rating || 0) + 1 }));
-    } finally {
-      setRatingLoading(false);
-    }
-  };
 
   return (
-    <div className={`min-h-screen ${heroColorAnalysis ? (heroColorAnalysis.isLight ? 'bg-white' : 'bg-black') : 'bg-background'}`}>
+    <div className="min-h-screen bg-background text-foreground">
       <PublicNavigation />
-      
+
       {/* Hero Image */}
       <div className="relative w-full overflow-hidden">
         {heroImage ? (
-          <img 
-            src={heroImage} 
+          <img
+            src={heroImage}
             alt={post.title}
             className="w-full h-auto object-contain max-h-64 sm:max-h-80 md:max-h-96 lg:max-h-[500px]"
             onError={e => e.currentTarget.style.display = 'none'}
@@ -240,7 +230,7 @@ const BlogPost = () => {
             No Image Available
           </div>
         )}
-        
+
         {/* Desktop/Tablet Text Overlay */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent hidden sm:block" />
         <div className="absolute bottom-0 left-0 right-0 p-3 sm:p-4 md:p-6 lg:p-8 hidden sm:block">
@@ -267,7 +257,7 @@ const BlogPost = () => {
 
       {/* Mobile Text Section - Shows below image on small screens */}
       <div className={`sm:hidden p-4 ${
-        heroColorAnalysis 
+        heroColorAnalysis
           ? (heroColorAnalysis.isLight ? 'bg-white text-black' : 'bg-black text-white')
           : 'bg-black text-white'
       }`}>
@@ -295,9 +285,7 @@ const BlogPost = () => {
         </div>
       </div>
 
-      <div className={`container mx-auto px-4 py-12 ${
-        heroColorAnalysis?.isLight ? 'bg-white' : 'bg-background'
-      }`}>
+      <div className="container mx-auto px-4 py-12 bg-background text-foreground">
         <div className="max-w-4xl mx-auto">
           <div className="flex flex-col lg:flex-row gap-12">
             {/* Main Content */}
@@ -322,24 +310,11 @@ const BlogPost = () => {
                         <Clock className="w-4 h-4" />
                         <span>{readTime}</span>
                       </div> */}
-                      {/* <div className="flex items-center space-x-1">
-                        <Eye className="w-4 h-4" />
-                        <span>{((post.views || 0) / 1000).toFixed(1)}K views</span>
-                      </div> */}
+
                     </div>
                   </div>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <button
-                    className="flex items-center bg-yellow-100 dark:bg-yellow-900/20 px-3 py-1 rounded-full focus:outline-none"
-                    onClick={handleRatePost}
-                    disabled={ratingLoading}
-                    title="Rate this post"
-                  >
-                    <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                    <span className="font-medium ml-1">{post.rating || 0}</span>
-                  </button>
-                </div>
+
               </div>
 
               {/* Audio Player */}
@@ -393,20 +368,7 @@ const BlogPost = () => {
               )}
 
               {/* Article Content */}
-              {process.env.NODE_ENV === 'development' && (
-                <div className="mb-4 p-4 bg-gray-100 rounded text-xs">
-                  <strong>Debug - Received Content:</strong>
-                  <div className="mt-2 p-2 bg-white border rounded">
-                    <div dangerouslySetInnerHTML={{ __html: post.content }} />
-                  </div>
-                  <div className="mt-2 p-2 bg-gray-200 border rounded">
-                    <strong>Raw HTML:</strong>
-                    <pre className="whitespace-pre-wrap text-xs">{post.content}</pre>
-                  </div>
-                </div>
-              )}
-              
-              <div 
+              <div
                 className="prose prose-lg max-w-none dark:prose-invert animate-fade-in blog-content"
                 style={{
                   '--tw-prose-body': 'inherit',
@@ -428,7 +390,7 @@ const BlogPost = () => {
                 } as React.CSSProperties}
                 dangerouslySetInnerHTML={{ __html: post.content }}
               />
-              
+
               {/* Custom CSS for paragraph spacing */}
               <style dangerouslySetInnerHTML={{
                 __html: `
@@ -488,6 +450,9 @@ const BlogPost = () => {
                       <FaYoutube className="w-4 h-4" /> YouTube
                     </a>
                   )}
+                  {artistSocial.tiktok && <a href={artistSocial.tiktok} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-muted hover:bg-muted/80 text-sm"><FaTiktok className="w-4 h-4" /> TikTok</a>}
+                  {artistSocial.instagram && <a href={artistSocial.instagram} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-muted hover:bg-muted/80 text-sm"><FaInstagram className="w-4 h-4" /> Instagram</a>}
+                  {artistSocial.website && <a href={artistSocial.website} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-muted hover:bg-muted/80 text-sm"><Globe className="w-4 h-4" /> Official Website</a>}
                   {artistSocial.apple_music && (
                     <a href={artistSocial.apple_music} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-muted hover:bg-muted/80 text-sm" aria-label="Apple Music">
                       <FaApple className="w-4 h-4" /> Apple Music
@@ -499,10 +464,10 @@ const BlogPost = () => {
               {/* Engagement Actions */}
               <div className="flex items-center justify-between mt-8 pt-6 border-t border-border">
                 <div className="flex items-center space-x-4">
-                  
-                 
+
+
                 </div>
-                
+
                 <SocialShare
                   url={window.location.href}
                   title={post.title}
@@ -563,10 +528,13 @@ const BlogPost = () => {
                         {authorBio}
                       </p>
                       <div className="flex space-x-2">
-                        <Button size="sm" variant="outline">
-                          <Twitter className="w-3 h-3 mr-1" />
-                          Follow
-                        </Button>
+                        {safeExternalLink(socialLinks.social_instagram_url) && (
+                          <Button size="sm" variant="outline" asChild>
+                            <a href={safeExternalLink(socialLinks.social_instagram_url)} target="_blank" rel="noopener noreferrer">
+                              <FaInstagram className="w-3 h-3 mr-1" /> Follow JamJournal
+                            </a>
+                          </Button>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -586,8 +554,8 @@ const BlogPost = () => {
                         <Link key={article.id} to={`/blog/post/${article.id}`}>
                           <div className="group cursor-pointer">
                             <div className="flex space-x-3">
-                              <img 
-                                src={getImageUrl(article.hero_image_url || article.image || '')} 
+                              <img
+                                src={getImageUrl(article.hero_image_url || article.image || '')}
                                 alt={article.title}
                                 className="w-16 h-16 object-cover rounded-lg flex-shrink-0"
                               />

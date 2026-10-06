@@ -27,6 +27,7 @@ const AdminLayout = ({ children }: { children: React.ReactNode }) => {
   ];
 
   const handleLogout = () => {
+    localStorage.removeItem("adminToken");
     navigate("/admin/login");
   };
 

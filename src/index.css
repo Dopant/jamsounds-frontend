@@ -249,3 +249,13 @@
   .stagger-5 { animation-delay: 0.5s; }
   .stagger-6 { animation-delay: 0.6s; }
 }
+/* Saved editor colors must remain readable in either reading theme. */
+.blog-content,
+.blog-content * {
+  color: hsl(var(--foreground)) !important;
+}
+
+.blog-content [style*="background"],
+.blog-content mark {
+  background-color: hsl(var(--muted)) !important;
+}
