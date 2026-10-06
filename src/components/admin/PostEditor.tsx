@@ -1,3 +1,4 @@
+import { AuthorPicker } from "./AuthorPicker";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -49,6 +50,7 @@ interface PostData {
   excerpt: string;
   content: string;
   author: string;
+  authorProfileId?: number;
   authorImage?: File;
   authorImageUrl?: string;
   genre_id?: number | string;
@@ -76,6 +78,7 @@ export function PostEditor({ initialData, genres, onSave, onCancel }: PostEditor
     excerpt: initialData?.excerpt || "",
     content: initialData?.content || "",
     author: initialData?.author || "",
+    authorProfileId: initialData?.authorProfileId,
     authorImageUrl: initialData?.authorImageUrl || "",
     genre_id: initialData?.genre_id || (genres[0]?.id ?? ''),
     genre_name: initialData?.genre_name || '',
@@ -177,6 +180,10 @@ export function PostEditor({ initialData, genres, onSave, onCancel }: PostEditor
   };
 
   const handleSave = () => {
+    if (!postData.authorProfileId) {
+      toast({ title: "Select an author", description: "Select an existing author or save a new author profile first.", variant: "destructive" });
+      return;
+    }
     if (!postData.title.trim()) {
       toast({
         title: "Missing title",
@@ -224,6 +231,7 @@ export function PostEditor({ initialData, genres, onSave, onCancel }: PostEditor
     console.log('Content type:', typeof postData.content);
     console.log('Content length:', postData.content?.length);
     formData.append("author_name", postData.author);
+    formData.append("author_profile_id", String(postData.authorProfileId));
     formData.append("genre_id", String(postData.genre_id));
     formData.append("tags", postData.tags.join(","));
     formData.append("featured", String(postData.featured));
@@ -329,16 +337,10 @@ export function PostEditor({ initialData, genres, onSave, onCancel }: PostEditor
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="author">Author</Label>
-                  <Input
-                    id="author"
-                    value={postData.author}
-                    onChange={(e) => setPostData(prev => ({ ...prev, author: e.target.value }))}
-                    placeholder="Author name"
-                  />
-                </div>
+              <AuthorPicker name={postData.author} profileId={postData.authorProfileId}
+                onChange={author => setPostData(previous => ({ ...previous, author: author.name, authorProfileId: author.id,
+                  ...(previous.authorProfileId !== author.id && { authorImage: undefined, authorImageUrl: '' }) }))} />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="genre_id">Genre</Label>
                   <Select

@@ -164,7 +164,7 @@ const BlogPost = () => {
   const mediaItems = Array.isArray(post.media) ? post.media : [];
   // Use author object from backend
   const authorName = post.author_name || post.author?.name || 'Admin';
-  const authorAvatar = post.author_image || post.author?.avatar || '';
+  const authorAvatar = post.author?.avatar || post.author_image || '';
   const authorBio = post.author?.bio || '';
   const postDate = post.created_at || post.date || '';
   const readTime = post.read_time || post.readTime || '—';
