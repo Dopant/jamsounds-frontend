@@ -370,19 +370,6 @@ const BlogPost = () => {
               )}
 
               {/* Article Content */}
-              {process.env.NODE_ENV === 'development' && (
-                <div className="mb-4 p-4 bg-gray-100 rounded text-xs">
-                  <strong>Debug - Received Content:</strong>
-                  <div className="mt-2 p-2 bg-white border rounded">
-                    <div dangerouslySetInnerHTML={{ __html: post.content }} />
-                  </div>
-                  <div className="mt-2 p-2 bg-gray-200 border rounded">
-                    <strong>Raw HTML:</strong>
-                    <pre className="whitespace-pre-wrap text-xs">{post.content}</pre>
-                  </div>
-                </div>
-              )}
-
               <div
                 className="prose prose-lg max-w-none dark:prose-invert animate-fade-in blog-content"
                 style={{
